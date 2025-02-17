@@ -1,0 +1,59 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Chat{% endblock %}
+
+{% block body %}
+    <div class="container mt-5">
+        <h1 class="text-center mb-4">Real-Time Chat</h1>
+
+        <div id="chat" class="border p-3 rounded shadow-sm mb-4" style="height: 400px; overflow-y: scroll;">
+            {# Messages will be loaded here dynamically #}
+            {% include 'chat/messages.html.twig' with {'messages': messages} %}
+        </div>
+
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Send a Message</h5>
+                {{ form_start(form, {'attr': {'class': 'd-flex flex-column'}}) }}
+                    {{ form_widget(form) }}
+                    <button type="submit" class="btn btn-primary mt-2">Send</button>
+                {{ form_end(form) }}
+            </div>
+        </div>
+
+        <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+        <script>
+            const chatDiv = document.getElementById('chat');
+            const form = document.querySelector('form');
+
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const formData = new FormData(form);
+
+                try {
+                    await axios.post('{{ path('chat') }}', formData, {
+                        headers: {
+                            'Content-Type': 'multipart/form-data',
+                        },
+                    });
+                    form.reset(); // Clear the form fields
+                    loadMessages(); // Reload messages
+                } catch (error) {
+                    console.error('Error submitting form:', error);
+                }
+            });
+
+            async function loadMessages() {
+                try {
+                    const response = await axios.get('{{ path('chat_messages') }}');
+                    chatDiv.innerHTML = response.data;
+                } catch (error) {
+                    console.error('Error loading messages:', error);
+                }
+            }
+
+            // Load messages every second
+            setInterval(loadMessages, 5000);
+        </script>
+    </div>
+{% endblock %}
